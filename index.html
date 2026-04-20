@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizon 30 - Défi Sobriété</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .progress-ring { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
+        .mood-btn { transition: all 0.2s; }
+        .active-mood { opacity: 1 !important; transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4)); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans text-slate-900">
+
+    <div class="max-w-md mx-auto p-6 pb-20">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-600 tracking-tight">Horizon 30</h1>
+            <p class="text-slate-500 text-sm">Votre système d'accompagnement IA</p>
+        </header>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-white rounded-2xl shadow-sm p-4 text-center border border-slate-100">
+                <span class="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Économisé</span>
+                <div class="text-2xl font-black text-emerald-500"><span id="savings-count">0</span> $</div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-4 text-center border border-slate-100">
+                <span class="text-slate-400 text-[10px] uppercase font-bold tracking-widest">Objectif</span>
+                <div class="text-2xl font-black text-indigo-500">30 Jours</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl p-8 mb-6 flex flex-col items-center border border-indigo-50">
+            <div class="relative inline-flex items-center justify-center">
+                <svg class="w-48 h-48">
+                    <circle class="text-slate-100" stroke-width="10" stroke="currentColor" fill="transparent" r="80" cx="96" cy="96"/>
+                    <circle id="progress-circle" class="text-indigo-500 progress-ring" stroke-width="10" stroke-dasharray="502.6" stroke-dashoffset="502.6" stroke-linecap="round" stroke="currentColor" fill="transparent" r="80" cx="96" cy="96"/>
+                </svg>
+                <div class="absolute text-center">
+                    <span id="day-count" class="text-5xl font-black block text-slate-800">0</span>
+                    <span class="text-sm uppercase tracking-widest text-slate-400 font-semibold">Jour</span>
+                </div>
+            </div>
+            <button id="check-in-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl transition-all active:scale-95 shadow-lg shadow-indigo-200">
+                Valider ma journée
+            </button>
+        </div>
+
+        <div id="tip-card" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="font-bold text-slate-800 italic">Étape <span id="tip-day">1</span> : <span id="tip-title">Détox</span></h3>
+                <span class="text-xl">🧬</span>
+            </div>
+            <p id="daily-tip" class="text-slate-600 text-sm leading-relaxed mb-4 italic">
+                Chargement...
+            </p>
+            <a id="tip-source" href="#" target="_blank" class="text-xs text-indigo-500 hover:underline font-medium">Lire la source scientifique →</a>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center">
+                <span class="mr-2">📝</span> Mon État d'Esprit
+            </h3>
+            
+            <div class="flex justify-between mb-6 px-2">
+                <button onclick="setMood(1)" class="mood-btn opacity-30 text-2xl" id="mood-1" title="Très difficile">😫</button>
+                <button onclick="setMood(2)" class="mood-btn opacity-30 text-2xl" id="mood-2" title="Difficile">😕</button>
+                <button onclick="setMood(3)" class="mood-btn opacity-30 text-2xl" id="mood-3" title="Neutre">😐</button>
+                <button onclick="setMood(4)" class="mood-btn opacity-30 text-2xl" id="mood-4" title="Bien">🙂</button>
+                <button onclick="setMood(5)" class="mood-btn opacity-30 text-2xl" id="mood-5" title="Excellent">🤩</button>
+            </div>
+
+            <textarea id="mood-note" placeholder="Notez une impulsion ou un ressenti à partager avec l'IA..." 
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all mb-3" rows="3"></textarea>
+            
+            <button onclick="saveJournal()" class="w-full bg-slate-800 text-white text-xs font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors">
+                Enregistrer & Analyser plus tard
+            </button>
+            
+            <div id="last-note" class="mt-4 text-[10px] text-slate-400 italic text-center"></div>
+        </div>
+
+        <button id="reset-btn" class="w-full mt-12 text-slate-300 text-[10px] uppercase tracking-tighter hover:text-red-400 transition-colors">Réinitialiser le défi</button>
+    </div>
+
+    <script>
+        const DAILY_SAVINGS = 25 / 7; 
+        
+        const data = [
+            { t: "Hydratation", d: "L'alcool est un diurétique. Dès 24h, vos reins régulent mieux l'eau. Votre cerveau récupère en énergie.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Glycémie", d: "Votre taux de glucose se stabilise. Le foie commence à mieux réguler le sucre sanguin.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Sommeil REM", d: "Le cycle du sommeil paradoxal revient. Vos rêves sont plus intenses, signe que votre cerveau trie les émotions.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Inflammation", d: "Les reflux acides et l'irritation de l'estomac diminuent. Votre digestion s'améliore nettement.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Immunité", d: "Vos globules blancs redeviennent plus efficaces contre les virus et bactéries.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Peau & Éclat", d: "L'hydratation cutanée s'améliore. Moins de cernes, teint plus clair (fin de la vasodilatation constante).", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Équilibre Nerveux", d: "Après une semaine, l'irritabilité liée au sevrage initial diminue. Le cortisol se stabilise.", s: "https://www.alcool-info-service.fr/agir-sur-sa-consommation/comment-arreter-de-boire/sevrage-ce-quil-faut-savoir-pour-mieux-vous" },
+            { t: "Régénération Foie", d: "Le processus de dégraissage du foie (stéatose) s'enclenche. Il commence à se réparer.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Pression Artérielle", d: "La tension commence à baisser, réduisant la charge de travail de votre cœur.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Humeur", d: "La production naturelle de sérotonine et dopamine se régule sans le perturbateur alcool.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Mémoire", d: "L'hippocampe (siège de la mémoire) fonctionne mieux. Les 'brouillards mentaux' s'estompent.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Poids métabolique", d: "Vous avez déjà évité environ 2000 calories vides. La graisse abdominale commence à diminuer.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Clarté Mentale", d: "Votre capacité de concentration augmente de 15 à 20% en moyenne.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Estime de soi", d: "Franchir le cap des 2 semaines renforce la confiance neuronale (circuit de la récompense).", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Vitamine B", d: "Votre corps absorbe mieux les vitamines B1, B12 et l'acide folique essentiels au système nerveux.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Inflammation Globale", d: "Les douleurs articulaires ou musculaires diffuses peuvent diminuer (moins d'acide urique).", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Sens (Goût/Odorat)", d: "Vos papilles gustatives se régénèrent. Les saveurs sont plus intenses.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Performance physique", d: "Meilleure oxygénation des muscles. Votre endurance augmente pendant l'effort.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Qualité du sang", d: "Le volume des globules rouges se normalise, améliorant le transport de l'oxygène.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Résilience sociale", d: "Vous apprenez à gérer les interactions sans alcool. Votre aisance naturelle revient.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Santé Cardiaque", d: "Le risque d'arythmie cardiaque diminue drastiquement après 3 semaines.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Réduction Anxiété", d: "L'effet rebond de l'alcool (anxiété du lendemain) a totalement disparu.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Focus profond", d: "Capacité à lire ou travailler sur de longues périodes sans distraction ou fatigue précoce.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Budget", d: "Vous avez économisé presque 90$. Un beau cadeau pour célébrer la fin du défi approche.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Foie : Phase Finale", d: "La régénération cellulaire du foie est à son maximum de vitesse.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Peau : Texture", d: "La production de collagène est plus saine. La peau est plus ferme et moins réactive.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Optimisme", d: "Le cerveau a recalibré ses récepteurs à dopamine. Les plaisirs simples redeviennent gratifiants.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Anticipation", d: "Votre cortex préfrontal (décision) est plus fort que vos impulsions amygdaliennes.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Liberté", d: "L'obsession mentale de 'boire pour décompresser' s'est largement dissipée.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Victoire !", d: "30 jours. Risque de cancer réduit, foie assaini, sommeil réparateur. Vous avez le contrôle.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" }
+        ];
+
+        let currentDay = localStorage.getItem('soberDays') ? parseInt(localStorage.getItem('soberDays')) : 0;
+        let currentMood = 0;
+        
+        function setMood(val) {
+            currentMood = val;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active-mood'));
+            document.getElementById('mood-' + val).classList.add('active-mood');
+        }
+
+        function saveJournal() {
+            const note = document.getElementById('mood-note').value;
+            if(!currentMood && !note) return alert("Ajoutez au moins une humeur ou une note.");
+            
+            const entry = { day: currentDay, mood: currentMood, text: note, date: new Date().toLocaleString() };
+            let history = JSON.parse(localStorage.getItem('soberHistory') || "[]");
+            history.push(entry);
+            localStorage.setItem('soberHistory', JSON.stringify(history));
+            
+            document.getElementById('last-note').innerText = "Sauvegardé : Jour " + currentDay + " (" + entry.date + ")";
+            document.getElementById('mood-note').value = "";
+            currentMood = 0;
+            document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active-mood'));
+        }
+
+        function updateUI() {
+            document.getElementById('day-count').innerText = currentDay;
+            document.getElementById('savings-count').innerText = (currentDay * DAILY_SAVINGS).toFixed(2);
+            
+            const radius = 80;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (Math.min(currentDay, 30) / 30) * circumference;
+            document.getElementById('progress-circle').style.strokeDashoffset = offset;
+            
+            const tipIndex = Math.min(currentDay, 29);
+            document.getElementById('tip-day').innerText = tipIndex + 1;
+            document.getElementById('tip-title').innerText = data[tipIndex].t;
+            document.getElementById('daily-tip').innerText = data[tipIndex].d;
+            document.getElementById('tip-source').href = data[tipIndex].s;
+
+            if(currentDay >= 30) {
+                document.getElementById('check-in-btn').innerText = "Mission Accomplie ! 🏆";
+                document.getElementById('check-in-btn').classList.replace('bg-indigo-600', 'bg-emerald-500');
+            }
+        }
+
+        document.getElementById('check-in-btn').addEventListener('click', () => {
+            if(currentDay < 30) {
+                currentDay++;
+                localStorage.setItem('soberDays', currentDay);
+                updateUI();
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm("Voulez-vous vraiment réinitialiser vos progrès et votre budget ?")) {
+                localStorage.clear();
+                currentDay = 0;
+                updateUI();
+            }
+        });
+
+        updateUI();
+    </script>
+</body>
+</html>
