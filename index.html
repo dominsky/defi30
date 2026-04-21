@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .progress-ring { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
-        .mood-btn { transition: all 0.2s; }
+        .mood-btn { transition: all 0.2s; cursor: pointer; }
         .active-mood { opacity: 1 !important; transform: scale(1.2); filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.4)); }
     </style>
 </head>
@@ -16,7 +16,7 @@
     <div class="max-w-md mx-auto p-6 pb-20">
         <header class="text-center mb-8">
             <h1 class="text-3xl font-bold text-indigo-600 tracking-tight">Horizon 30</h1>
-            <p class="text-slate-500 text-sm">Votre système d'accompagnement IA</p>
+            <p class="text-slate-500 text-sm">Système d'accompagnement IA</p>
         </header>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
@@ -51,72 +51,68 @@
                 <h3 class="font-bold text-slate-800 italic">Étape <span id="tip-day">1</span> : <span id="tip-title">Détox</span></h3>
                 <span class="text-xl">🧬</span>
             </div>
-            <p id="daily-tip" class="text-slate-600 text-sm leading-relaxed mb-4 italic">
-                Chargement...
-            </p>
+            <p id="daily-tip" class="text-slate-600 text-sm leading-relaxed mb-4 italic italic">Chargement...</p>
             <a id="tip-source" href="#" target="_blank" class="text-xs text-indigo-500 hover:underline font-medium">Lire la source scientifique →</a>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-slate-800 mb-4 flex items-center">
-                <span class="mr-2">📝</span> Mon État d'Esprit
-            </h3>
-            
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
+            <h3 class="font-bold text-slate-800 mb-4 flex items-center"><span class="mr-2">📝</span> Mon État d'Esprit</h3>
             <div class="flex justify-between mb-6 px-2">
-                <button onclick="setMood(1)" class="mood-btn opacity-30 text-2xl" id="mood-1" title="Très difficile">😫</button>
-                <button onclick="setMood(2)" class="mood-btn opacity-30 text-2xl" id="mood-2" title="Difficile">😕</button>
-                <button onclick="setMood(3)" class="mood-btn opacity-30 text-2xl" id="mood-3" title="Neutre">😐</button>
-                <button onclick="setMood(4)" class="mood-btn opacity-30 text-2xl" id="mood-4" title="Bien">🙂</button>
-                <button onclick="setMood(5)" class="mood-btn opacity-30 text-2xl" id="mood-5" title="Excellent">🤩</button>
+                <button onclick="setMood(1)" class="mood-btn opacity-30 text-2xl" id="mood-1">😫</button>
+                <button onclick="setMood(2)" class="mood-btn opacity-30 text-2xl" id="mood-2">😕</button>
+                <button onclick="setMood(3)" class="mood-btn opacity-30 text-2xl" id="mood-3">😐</button>
+                <button onclick="setMood(4)" class="mood-btn opacity-30 text-2xl" id="mood-4">🙂</button>
+                <button onclick="setMood(5)" class="mood-btn opacity-30 text-2xl" id="mood-5">🤩</button>
             </div>
-
-            <textarea id="mood-note" placeholder="Notez une impulsion ou un ressenti à partager avec l'IA..." 
-                class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all mb-3" rows="3"></textarea>
-            
-            <button onclick="saveJournal()" class="w-full bg-slate-800 text-white text-xs font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors">
-                Enregistrer & Analyser plus tard
-            </button>
-            
-            <div id="last-note" class="mt-4 text-[10px] text-slate-400 italic text-center"></div>
+            <textarea id="mood-note" placeholder="Comment s'est passée votre journée ?" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all mb-3" rows="3"></textarea>
+            <button onclick="saveJournal()" class="w-full bg-slate-800 text-white text-xs font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors">Enregistrer ma note</button>
         </div>
 
-        <button id="reset-btn" class="w-full mt-12 text-slate-300 text-[10px] uppercase tracking-tighter hover:text-red-400 transition-colors">Réinitialiser le défi</button>
+        <div class="bg-indigo-900 rounded-2xl p-6 text-white shadow-lg mb-6">
+            <h3 class="font-bold mb-4 flex items-center"><span class="mr-2">📚</span> Archives du Voyage</h3>
+            <div id="history-list" class="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar text-sm">
+                <p class="text-indigo-300 italic text-xs text-center">Aucune archive pour le moment.</p>
+            </div>
+        </div>
+
+        <button id="reset-btn" class="w-full mt-6 text-slate-300 text-[10px] uppercase tracking-tighter hover:text-red-400 transition-colors">Réinitialiser le défi</button>
     </div>
 
     <script>
-        const DAILY_SAVINGS = 25 / 7; 
+        const DAILY_SAVINGS = 25 / 7;
+        const moodEmojis = ["", "😫", "😕", "😐", "🙂", "🤩"];
         
         const data = [
             { t: "Hydratation", d: "L'alcool est un diurétique. Dès 24h, vos reins régulent mieux l'eau. Votre cerveau récupère en énergie.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
             { t: "Glycémie", d: "Votre taux de glucose se stabilise. Le foie commence à mieux réguler le sucre sanguin.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
             { t: "Sommeil REM", d: "Le cycle du sommeil paradoxal revient. Vos rêves sont plus intenses, signe que votre cerveau trie les émotions.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Inflammation", d: "Les reflux acides et l'irritation de l'estomac diminuent. Votre digestion s'améliore nettement.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Inflammation", d: "Les reflux acides et l'irritation de l'estomac diminuent. Votre digestion s'amplifie.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
             { t: "Immunité", d: "Vos globules blancs redeviennent plus efficaces contre les virus et bactéries.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
-            { t: "Peau & Éclat", d: "L'hydratation cutanée s'améliore. Moins de cernes, teint plus clair (fin de la vasodilatation constante).", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
-            { t: "Équilibre Nerveux", d: "Après une semaine, l'irritabilité liée au sevrage initial diminue. Le cortisol se stabilise.", s: "https://www.alcool-info-service.fr/agir-sur-sa-consommation/comment-arreter-de-boire/sevrage-ce-quil-faut-savoir-pour-mieux-vous" },
-            { t: "Régénération Foie", d: "Le processus de dégraissage du foie (stéatose) s'enclenche. Il commence à se réparer.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Pression Artérielle", d: "La tension commence à baisser, réduisant la charge de travail de votre cœur.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
-            { t: "Humeur", d: "La production naturelle de sérotonine et dopamine se régule sans le perturbateur alcool.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
-            { t: "Mémoire", d: "L'hippocampe (siège de la mémoire) fonctionne mieux. Les 'brouillards mentaux' s'estompent.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Poids métabolique", d: "Vous avez déjà évité environ 2000 calories vides. La graisse abdominale commence à diminuer.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Clarté Mentale", d: "Votre capacité de concentration augmente de 15 à 20% en moyenne.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
-            { t: "Estime de soi", d: "Franchir le cap des 2 semaines renforce la confiance neuronale (circuit de la récompense).", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Vitamine B", d: "Votre corps absorbe mieux les vitamines B1, B12 et l'acide folique essentiels au système nerveux.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
-            { t: "Inflammation Globale", d: "Les douleurs articulaires ou musculaires diffuses peuvent diminuer (moins d'acide urique).", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Sens (Goût/Odorat)", d: "Vos papilles gustatives se régénèrent. Les saveurs sont plus intenses.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Performance physique", d: "Meilleure oxygénation des muscles. Votre endurance augmente pendant l'effort.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
-            { t: "Qualité du sang", d: "Le volume des globules rouges se normalise, améliorant le transport de l'oxygène.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
-            { t: "Résilience sociale", d: "Vous apprenez à gérer les interactions sans alcool. Votre aisance naturelle revient.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Santé Cardiaque", d: "Le risque d'arythmie cardiaque diminue drastiquement après 3 semaines.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
-            { t: "Réduction Anxiété", d: "L'effet rebond de l'alcool (anxiété du lendemain) a totalement disparu.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Focus profond", d: "Capacité à lire ou travailler sur de longues périodes sans distraction ou fatigue précoce.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
-            { t: "Budget", d: "Vous avez économisé presque 90$. Un beau cadeau pour célébrer la fin du défi approche.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Foie : Phase Finale", d: "La régénération cellulaire du foie est à son maximum de vitesse.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
-            { t: "Peau : Texture", d: "La production de collagène est plus saine. La peau est plus ferme et moins réactive.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
-            { t: "Optimisme", d: "Le cerveau a recalibré ses récepteurs à dopamine. Les plaisirs simples redeviennent gratifiants.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Anticipation", d: "Votre cortex préfrontal (décision) est plus fort que vos impulsions amygdaliennes.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
-            { t: "Liberté", d: "L'obsession mentale de 'boire pour décompresser' s'est largement dissipée.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
-            { t: "Victoire !", d: "30 jours. Risque de cancer réduit, foie assaini, sommeil réparateur. Vous avez le contrôle.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" }
+            { t: "Peau & Éclat", d: "L'hydratation cutanée s'améliore. Moins de cernes, teint plus clair.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Équilibre Nerveux", d: "Après une semaine, l'irritabilité diminue. Le cortisol se stabilise.", s: "https://www.alcool-info-service.fr/agir-sur-sa-consommation/comment-arreter-de-boire/sevrage-ce-quil-faut-savoir-pour-mieux-vous" },
+            { t: "Régénération Foie", d: "Le processus de dégraissage du foie s'enclenche. Il commence à se réparer.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Pression Artérielle", d: "La tension baisse, réduisant la charge de travail de votre cœur.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Humeur", d: "La production de sérotonine se régule sans le perturbateur alcool.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Mémoire", d: "L'hippocampe fonctionne mieux. Les 'brouillards mentaux' s'estompent.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Poids métabolique", d: "Vous avez déjà évité environ 2000 calories vides.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Clarté Mentale", d: "Votre capacité de concentration augmente de 15 à 20%.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Estime de soi", d: "Franchir 2 semaines renforce la confiance neuronale.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Vitamine B", d: "Absorption accrue des vitamines essentielles au système nerveux.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Inflammation Globale", d: "Les douleurs articulaires diminuent (moins d'acide urique).", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Sens (Goût/Odorat)", d: "Vos papilles gustatives se régénèrent. Saveurs intenses.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Performance physique", d: "Meilleure oxygénation des muscles.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Qualité du sang", d: "Le volume des globules rouges se normalise.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Résilience sociale", d: "Vous gérez les interactions sans alcool. Aisance naturelle.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Santé Cardiaque", d: "Le risque d'arythmie diminue drastiquement.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" },
+            { t: "Réduction Anxiété", d: "L'effet rebond de l'alcool a totalement disparu.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Focus profond", d: "Travaillez sur de longues périodes sans fatigue précoce.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Budget", d: "Presque 90$ économisés. Offrez-vous une récompense saine.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Foie : Phase Finale", d: "Régénération cellulaire à son maximum.", s: "https://www.livi.fr/en-bonne-sante/arret-alcool-bienfaits/" },
+            { t: "Peau : Texture", d: "Production de collagène saine. Peau plus ferme.", s: "https://www.priorygroup.com/blog/benefits-of-giving-up-alcohol-for-a-month" },
+            { t: "Optimisme", d: "Le cerveau a recalibré ses récepteurs à dopamine.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Anticipation", d: "Votre cortex préfrontal est plus fort que vos impulsions.", s: "https://www.qare.fr/sante/addiction/alcoolisme/arret/" },
+            { t: "Liberté", d: "L'obsession mentale de boire s'est dissipée.", s: "https://portage.ca/fr/28-benefices-de-cesser-lalcool-pendant-28-jours/" },
+            { t: "Victoire !", d: "30 jours. Vous avez repris le contrôle total.", s: "https://www.unsw.edu.au/newsroom/news/2025/07/day-off-drinking-alcohol-abstinence-health-benefits-stop-drinking" }
         ];
 
         let currentDay = localStorage.getItem('soberDays') ? parseInt(localStorage.getItem('soberDays')) : 0;
@@ -130,17 +126,43 @@
 
         function saveJournal() {
             const note = document.getElementById('mood-note').value;
-            if(!currentMood && !note) return alert("Ajoutez au moins une humeur ou une note.");
+            if(!currentMood && !note) return alert("Ajoutez une humeur ou une note.");
             
-            const entry = { day: currentDay, mood: currentMood, text: note, date: new Date().toLocaleString() };
+            const entry = {
+                day: currentDay,
+                mood: currentMood,
+                text: note,
+                date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
+            };
+            
             let history = JSON.parse(localStorage.getItem('soberHistory') || "[]");
-            history.push(entry);
+            history.unshift(entry); // Ajoute au début de la liste
             localStorage.setItem('soberHistory', JSON.stringify(history));
             
-            document.getElementById('last-note').innerText = "Sauvegardé : Jour " + currentDay + " (" + entry.date + ")";
             document.getElementById('mood-note').value = "";
             currentMood = 0;
             document.querySelectorAll('.mood-btn').forEach(btn => btn.classList.remove('active-mood'));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = JSON.parse(localStorage.getItem('soberHistory') || "[]");
+            const list = document.getElementById('history-list');
+            
+            if(history.length === 0) {
+                list.innerHTML = `<p class="text-indigo-300 italic text-xs text-center">Aucune archive pour le moment.</p>`;
+                return;
+            }
+            
+            list.innerHTML = history.map(entry => `
+                <div class="bg-indigo-800/50 p-3 rounded-xl border border-indigo-700">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-indigo-200 text-xs">Jour ${entry.day} — ${entry.date}</span>
+                        <span>${moodEmojis[entry.mood] || ''}</span>
+                    </div>
+                    <p class="text-white text-xs leading-relaxed">${entry.text || 'Pas de commentaire.'}</p>
+                </div>
+            `).join('');
         }
 
         function updateUI() {
@@ -162,6 +184,7 @@
                 document.getElementById('check-in-btn').innerText = "Mission Accomplie ! 🏆";
                 document.getElementById('check-in-btn').classList.replace('bg-indigo-600', 'bg-emerald-500');
             }
+            renderHistory();
         }
 
         document.getElementById('check-in-btn').addEventListener('click', () => {
@@ -173,7 +196,7 @@
         });
 
         document.getElementById('reset-btn').addEventListener('click', () => {
-            if(confirm("Voulez-vous vraiment réinitialiser vos progrès et votre budget ?")) {
+            if(confirm("Réinitialiser le défi et l'historique ?")) {
                 localStorage.clear();
                 currentDay = 0;
                 updateUI();
